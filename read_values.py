@@ -35,3 +35,4 @@ def get_data(run_id):
         data.append(generation)
     with open(run_id + '_data.yaml', 'w') as file:
         yaml.dump(data, file,default_flow_style=False)
+    print('...done!')
