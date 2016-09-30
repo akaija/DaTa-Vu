@@ -1,49 +1,40 @@
 import matplotlib.pyplot as plt
 import yaml
 
+def grab_data(x, gen, data):
+    if x == 'ML':
+        y = data[gen]['absolute-volumetric-methane-loading']
+        lims = [0, 300]
+    elif x == 'SA':
+        y = data[gen]['volumetric-surface-area']
+        lims = [0, 4000]
+    elif x == 'VF':
+        y = data[gen]['helium-void-fraction']
+        lims = [0, 1]
+    else:
+        print('UNKOWN REQUEST')
+    return y, lims
+
+def plot_gen(x, y, gen, data):
+    print('Plotting generation %s...' % gen)
+    a, a_lims = grab_data(x, gen, data)
+    b, b_lims = grab_data(y, gen, data)
+    fig = plt.figure(figsize=(6, 6))
+    for i in range(gen):
+        n, n_lims = grab_data(x, i, data)
+        m, m_lims = grab_data(y, i, data)
+        plt.scatter(n, m, marker='o', color='k', alpha=0.5)
+    plt.scatter(a, b, marker='o', color='r', alpha=0.5)
+    plt.xlim(a_lims)
+    plt.ylim(b_lims)
+    plt.savefig('%s_v_%s_g%s' % (x, y, gen), transparent=False)
+    plt.close()
+
 def plot_data(run_id):
     with open(run_id + '.yaml') as file:
         data = yaml.load(file)
-        generations = len(data)
-        counter = 0
-        for row in data:
-            generation = row['generation']
-            if row['generation'] == counter:
-                print('Plotting data from generation %s....' % generation)
-                ML = row['absolute-volumetric-methane-loading']
-                SA = row['volumetric-surface-area']
-                VF = row['helium-void-fraction']
-                # arbitrary boundaries, in excess of expected maxima
-                ML_lims = [0, 300]
-                SA_lims = [0, 4000]
-                VF_lims = [0, 1]
-                # surface area v. methane loading
-                fig1 = plt.figure(figsize=(6, 6))
-                fig1_name = '%s_%s_SAvML' % (run_id, generation)
-#                plt.title(fig1_name)
-                plt.scatter(SA, ML, marker='o', color='r', alpha=0.5)
-                plt.xlim(*SA_lims)
-                plt.ylim(*ML_lims)
-                plt.savefig(fig1_name, transparent=True)
-                plt.close()
-                # void fraction v. methane loading
-                fig2 = plt.figure(figsize=(6, 6))
-                fig2_name = '%s_%s_VFvML' % (run_id, generation)
-#                plt.title(fig1_name)
-                plt.scatter(VF, ML, marker='o', color='r', alpha=0.5)
-                plt.xlim(*VF_lims)
-                plt.ylim(*ML_lims)
-                plt.savefig(fig2_name, transparent=True)
-                plt.close()
-                # void fraction v. surface area
-                fig3 = plt.figure(figsize=(6, 6))
-                fig3_name = '%s_%s_VFvSA' % (run_id, generation)
-#                plt.title(fig1_name)
-                plt.scatter(VF, SA, marker='o', color='r', alpha=0.5)
-                plt.xlim(*VF_lims)
-                plt.ylim(*SA_lims)
-                plt.savefig(fig3_name, transparent=True)
-                plt.close()
-            else:
-                pass
-            counter += 1
+    for i in range(len(data)):
+        plot_gen('VF', 'ML', i, data)
+        plot_gen('VF', 'SA', i, data)
+        plot_gen('SA', 'ML', i, data)
+    print('Done!')
