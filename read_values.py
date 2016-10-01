@@ -3,22 +3,45 @@ import os
 from sqlalchemy import func
 import yaml
 
-from runDB_declarative import Base, Material, session
+from db.__init__ import session
+from db.base import Base
+from db.material import Material
 
 def run_ids():
-    values = session.query(Material.run_id, func.max(Material.generation),func.count(Material.id)).group_by(Material.run_id).all()[:]
-    print('run-id\t\t\t\tgenerations\tmaterials')
+    values = session \
+                 .query(
+                     Material.run_id,
+                     func.max(Material.generation),
+                     func.count(Material.id)
+                 ) \
+                 .group_by(Material.run_id) \
+                 .all()[:]
+    print('run-id\t\t\t\tgenerations\tmaterial')
     for i in values:
         print('%s\t%s\t\t%s' % (i[0], i[1], i[2]))
 
 def get_data(run_id):
-    print('run-id\t\t\t\tgenerations\tmaterials')
-    info = session.query(func.max(Material.generation), func.count(Material.id)).filter(Material.run_id==run_id).all()[0]
+    print('run-id\t\t\t\tgenerations\tmaterial')
+    info = session \
+              .query(
+                  func.max(Material.generation),
+                  func.count(Material.id)
+              ) \
+              .filter(Material.run_id==run_id).all()[0]
     print('%s\t%s\t\t%s' % (run_id, info[0], info[1]))
     data = []
     for i in range(info[0]):
         print('Writing generation :\t%s' % i)
-        values = session.query(Material.absolute_volumetric_loading, Material.volumetric_surface_area, Material.helium_void_fraction).filter(Material.run_id==run_id, Material.generation==i).all()[:]
+        values = session \
+                   .query(
+                      Material.ml_absolute_volumetric_loading,
+                      Material.sa_volumetric_surface_area, 
+                      Material.vf_helium_void_fraction
+                   ) \
+                   .filter(
+                      Material.run_id==run_id,
+                      Material.generation==i
+                   ).all()[:]
         AVL = []
         VSA = []
         HVF = []
