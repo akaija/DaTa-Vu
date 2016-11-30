@@ -1,5 +1,1 @@
-# Please copy this file to database.yaml and change the connection string to
-# point to your database, or just use the below sqlite database connection
-# string for testing.
-
-connection_string: "postgresql://htsohm:dentate-canst-freely@10.201.0.11/htsohm"
+connection_string: "postgresql://htsohm:dentate-canst-freely@127.0.01/htsohm_28nov"
