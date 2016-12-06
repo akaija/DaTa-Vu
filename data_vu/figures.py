@@ -7,271 +7,133 @@ from data_vu.queries import *
 from data_vu.files import load_config_file
 from data_vu.plotting import *
 
-def plot_all_data(run_id):
-    generations = count_generations(run_id)
-    config = load_config_file(run_id)
-    number_of_bins  = config['number_of_convergence_bins']
-    print('\nrun_id :\t%s' % run_id)
-    print('generations :\t%s' % generations)
-    print('binning :\t%(bins)s x %(bins)s x %(bins)s' % {'bins': number_of_bins})
-
-    axes = [
-        ['vf', 'sa'],
-        ['vf', 'ml'],
-        ['sa', 'ml']
-    ]
-
-    data = [
-        'MutationStrength',
-        'DataPoints',
-        'BinCounts'
-    ]
-
-    for data_type in data:
-        for axis in axes:
-            if data_type == 'MutationStrength':
-                x = axis[0] + '_bin_MS'
-                y = axis[1] + '_bin_MS'
-            elif data_type == 'DataPoints':
-                x = axis[0]
-                y = axis[1]
-            elif data_type == 'BinCounts':
-                x = axis[0] + '_bin'
-                y = axis[1] + '_bin'
-            plot_all(
-                x, y, data_type, run_id, config, generations
-            )
-    print('...done!')
-
-def plot_points_one(run_id, gen, x, y):
-    """
-    Args:
-        run_id, gen, x, y
-
-    """
-    config = load_config_file(run_id)
-    ax = plt.subplot(111)
-    plot_points_all(x, y, run_id, gen, config, ax)
-    plt.savefig(
-        '%s_gen%s_%sv%s.png' % (run_id, gen, x, y),
-        bbox_inches = 'tight',
-        pad_inches = 0,
-        dpi = 96 * 4
-    )
-
-def plot_all(x, y, data, run_id, config, generations):
-    print('plotting %s v %s, %s....' % (x, y, data))
-    number_of_bins = config['number_of_convergence_bins']
-    fig = plt.figure(figsize=(2 * generations, 2 * number_of_bins))
-    for gen in range(generations):
-        print('generation :\t%s' % gen)
-        for z_bin in range(number_of_bins):
-            print('z_bin :\t%s' % z_bin)
-            ax = plt.subplot(
-                number_of_bins,
-                generations,
-                z_bin * generations + gen + 1
-            )
-            if data == 'MutationStrength':
-                plot_mutation_strengths(x, y, z_bin, run_id, gen, config, ax)
-            elif data == 'DataPoints':
-                plot_points(x, y, z_bin, run_id, gen, config, ax)
-            elif data == 'BinCounts':
-                plot_bin_counts(x, y, z_bin, run_id, gen, config, ax)
-    plt.savefig(
-        '%s_%s_%s_%s.png' % (run_id, x, y, data),
-        bbox_inches = 'tight',
-        pad_inches = 0,
-        dpi = 96
-    )
-
-def plot_some_data(run_id, bins, generations):
-    """Plots user-defined bin-normals and generations.
-
-    Args:
-        run_id (str): identification string for run.
-        bins (list): bin-normals(int) to plot.
-        generations (list): generations(int) to plot.
-
-    Returns:
-        Saves subplot-figures for all data under the user's constraints.
-
-    """
-    print('\nrun_id :\t%s' % run_id)
-    print('generations :\t%s' % generations)
-    print('bins :\t\t\t%s' % bins)
-    
-    config = load_config_file(run_id)
-
-    axes = [
-        ['vf', 'sa'],
-        ['vf', 'ml'],
-        ['sa', 'ml']
-    ]
-
-    data = [:q!
-        'MutationStrength',
-        'DataPoints',
-        'BinCounts'
-    ]
-
-    for data_type in data:
-        for axis in axes:
-            if data_type == 'MutationStrength':
-                x = axis[0] + '_bin_MS'
-                y = axis[1] + '_bin_MS'
-            elif data_type == 'DataPoints':
-                x = axis[0]
-                y = axis[1]
-            elif data_type == 'BinCounts':
-                x = axis[0] + '_bin'
-                y = axis[1] + '_bin'
-            plot_some(
-                x, y, data_type, run_id, bins, generations, config
-            )
-            plot_overall(
-                x, y, data_type, run_id, bins, generations, config
-            )
-    print('...done!')
-
-def plot_some(x, y, data, run_id, bins, generations, config):
-    print('plotting %s v %s, %s....' % (x, y, data))
-    fig = plt.figure(figsize=(1.5, 1.5))
-    if not os.path.exists(run_id):
-        os.makedirs(run_id)
-    for gen in generations:
-        gen_path = os.path.join(run_id, 'gen%s' % gen)
-        if not os.path.exists(gen_path):
-            os.makedirs(gen_path)
-        print('generation :\t%s' % gen)
-        for z_bin in bins:
-            ax = plt.subplot(111)
-            data_path = os.path.join(gen_path, data)
-            if not os.path.exists(data_path):
-                os.makedirs(data_path)
-            if data == 'MutationStrength':
-                           plot_mutation_strengths(x, y, z_bin, run_id, gen, config, ax)
-            elif data == 'DataPoints':
-                plot_points(x, y, z_bin, run_id, gen, config, ax)
-            elif data == 'BinCounts':
-                plot_bin_counts(x, y, z_bin, run_id, gen, config, ax)
-            plot_path = os.path.join(
-                data_path,
-                '%s_gen%s_%s_%s_%s_%s.png' % (run_id, gen, x, y, z_bin, data)
-            )
-            plt.savefig(
-                plot_path,
-                bbox_inches = 'tight',
-                pad_inches = 0,
-                dpi = 96 * 4
-            )
-            plt.cla()
-
-def plot_overall(x, y, data, run_id, bins, generations, config):
-    print('plotting %s v %s, %s....' % (x, y, data))
-    fig = plt.figure(figsize=(1.5, 1.5))
-    if not os.path.exists(run_id):
-        os.makedirs(run_id)
-    for gen in generations:
-        gen_path = os.path.join(run_id, 'gen%s' % gen)
-        if not os.path.exists(gen_path):
-            os.makedirs(gen_path)
-        ax = plt.subplot(111)
-        data_path = os.path.join(gen_path, data)
-        if not os.path.exists(data_path):
-            os.makedirs(data_path)
-        if data == 'MutationStrength':
-            plot_mutation_strengths_all(x, y, run_id, gen, config, ax)
-        elif data == 'DataPoints':
-            plot_points_all(x, y, run_id, gen, config, ax)
-        elif data == 'BinCounts':
-            plot_bin_counts_all(x, y, run_id, gen, config, ax)
-        plot_path = os.path.join(
-            data_path,
-            '%s_gen%s_%s_%s_all_%s.png' % (run_id, gen, x, y, data)
-        )
-        plt.savefig(
-            plot_path,
-            bbox_inches = 'tight',
-            pad_inches = 0,
-            dpi = 96 * 4
-        )
-        plt.cla()
-
-def compare_runs(
-        run_id_0, bins_0, generations_0,
-        run_id_1, bins_1, generations_1
+def plot_HTSOHM(
+        run_id,
+        generations,
+        z_bins,
+        data_types,
+        axes = [
+            ['vf', 'sa'],
+            ['vf', 'ml'],
+            ['sa', 'ml']
+        ],
+        labels = 'first_only',
+        highlight_parents = 'on',
+        highlight_children = 'on'
     ):
-    """Plots user-defined bin-normals and generations.
+    """Creates subplot figures for different axes and data-types.
 
     Args:
-        run_id_0, bins_0, generations_0,
-        run_id_1, bins_1, generations_1
+        run_id (str): run identification string.
+        generations (str, int, <class 'list'>): `all`, [0, 1, 2, ...], etc.
+        z_bins (str, int, <class 'list'>): `all`, None, [0, 1, 2, ...], etc.
+        data_types (str, <class 'list'>): `all`, `DataPoints`, `BinCounts`,
+            `MutationStrengths`, or list of these.
+        axes (<class 'list'>): ex. [['vf', 'sa'], ['vf', 'ml'], ['sa', 'ml']]
+        labels (str): `first_only`(default), `all`, None.
+        highlight_parents (str): `on`(default), `off`.
+        highlight_children (str): `on`(default), `off`.
 
     Returns:
         None
 
     """
-    config_0 = load_config_file(run_id_0)
-    config_1 = load_config_file(run_id_1)
+    config = load_config_file(run_id)
 
-    axes = [
-        ['vf', 'sa'],
-        ['vf', 'ml'],
-        ['sa', 'ml']
-    ]
+    if generations == 'all':
+        generations = [ i for i in range( count_generations(run_id) ) ]
+    if z_bins == 'all':
+        z_bins = [ i for i in range( config['number_of_convergence_bins'] ) ]
+    if data_types == 'all':
+        data_types = ['DataPoints', 'BinCounts', 'MutationStrengths']
+    if axes == 'all':
+        axes = [
+            ['vf', 'sa'],
+            ['vf', 'ml'],
+            ['sa', 'ml']
+        ]
 
-    data = [
-        'DataPoints',
-        'BinCounts'
-    ]
+    generations = make_list(generations)
+    z_bins = make_list(z_bins)
+    data_types = make_list(data_types)
 
-    plt.cla()
+    for data_type in data_types:
+        print('Plotting %s...' % data_type)
 
-    for data_type in data:
-        print(data_type)
-        for axis in axes:
-            print(axis)
-            if data_type == 'DataPoints':
-                x = axis[0]
-                y = axis[1]
+        for [x, y] in axes:
+            print('\t%s v %s' % (x, y))
 
-                ax_0 = plt.subplot(121)
-                plot_points_all(
-                    x, y, run_id_0, generations_0, config_0, ax_0
-                )
-                ax_1 = plt.subplot(122)
-                plot_points_all(
-                    x, y, run_id_1, generations_1, config_1, ax_1
-                )
-                plt.savefig(
-                    '%s_%s_%s_%s_v_%s.png' % (
-                        data_type, x, y, run_id_0, run_id_1
-                    ),
-                    bbox_inches = 'tight',
-                    pad_inches = 0,
-                    dpi = 96 * 4
-                )
-                plt.cla()
+            fig = plt.figure(
+                figsize = ( 2 * len(generations), 2 * len(z_bins) )
+            )
+            fig_title = '%s\n' % run_id + \
+                'gen. %s thru %s\n' % (generations[0], generations[-1]) + \
+                'bin %s thru %s' % (z_bins[0], z_bins[-1])
+            fig.suptitle(fig_title)
 
-            elif data_type == 'BinCounts':
-                x = axis[0] + '_bin'
-                y = axis[1] + '_bin'
+            for generation in generations:
+                print('\t\tgeneration:\t%s' % generation)
 
-                ax_0 = plt.subplot(121)
-                plot_bin_counts_all(
-                    x, y, run_id_0, generations_0, config_0, ax_0
-                )
-                ax_1 = plt.subplot(122)
-                plot_bin_counts_all(
-                    x, y, run_id_1, generations_1, config_1, ax_1
-                )
-                plt.savefig(
-                    '%s_%s_%s_%s_v_%s.png' % (
-                        data_type, x, y, run_id_0, run_id_1
-                    ),
-                    bbox_inches = 'tight',
-                    pad_inches = 0,
-                    dpi = 96 * 4
-                )
-                plt.cla()
+                for z_bin in z_bins:
+                    print('\t\t\tz_bin:\t%s' % z_bin)
+
+                    rows = len(z_bins)
+                    row = z_bins.index(z_bin) + 1
+                    if z_bins == None or len(z_bins) == 1:
+                        row = rows = 1
+
+                    columns = len(generations)
+                    column = generations.index(generation) + 1
+                    if len(generations) == 1:
+                        column = columns = 1
+
+                    ax = plt.subplot(
+                        rows,
+                        columns,
+                        (row - 1) * columns + column
+                    )
+                    
+                    if data_type == 'DataPoints':
+                        plot_points(
+                            x, y, z_bin,
+                            run_id, generation,
+                            config, ax, z_bins, generations,
+                            labels,
+                            highlight_children,
+                            highlight_parents
+                        )
+
+                    elif data_type == 'BinCounts':
+                        BC_x = x + '_bin'
+                        BC_y = y + '_bin'
+                        plot_bin_counts(
+                            BC_x, BC_y, z_bin,
+                            run_id, generation,
+                            config, ax, z_bins, generations,
+                            labels,
+                            highlight_children,
+                            highlight_parents
+                        )
+
+                    elif data_type == 'MutationStrengths':
+                        MS_x = x + '_mutation_strength'
+                        MS_y = y + '_mutation_strength'
+                        plot_mutation_strengths(
+                            MS_x, MS_y, z_bin,
+                            run_id, generation,
+                            config, ax, z_bins, generations,
+                            labels,
+                            highlight_children,
+                            highlight_parents
+                        )
+
+            plt.savefig(
+                '%s_%s_%s_%s_' % (run_id, x, y, data_type) +
+                    'bins%sto%s_' % (z_bins[0], z_bins[-1]) +
+                    'gens%sto%s.png' % (generations[0], generations[-1]),
+                bbox_inches = 'tight',
+                pad_inches = 0,
+                dpi = 96 * 8
+            )
+            plt.cla()
+    print('...done!')
