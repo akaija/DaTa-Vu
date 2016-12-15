@@ -18,8 +18,10 @@ def plot_HTSOHM(
             ['sa', 'ml']
         ],
         labels = 'first_only',
-        highlight_parents = 'on',
-        highlight_children = 'on'
+        highlight_parents = 'off',
+        highlight_children = 'on',
+        pick_parents = 'off',
+        pick_bins = 'off'
     ):
     """Creates subplot figures for different axes and data-types.
 
@@ -33,6 +35,8 @@ def plot_HTSOHM(
         labels (str): `first_only`(default), `all`, None.
         highlight_parents (str): `on`(default), `off`.
         highlight_children (str): `on`(default), `off`.
+        pick_parents (str): `on`(default), `off`.
+        pick_bins (str): `on`(default), `off`.
 
     Returns:
         None
@@ -56,6 +60,7 @@ def plot_HTSOHM(
     generations = make_list(generations)
     z_bins = make_list(z_bins)
     data_types = make_list(data_types)
+    axes = make_list(axes)
 
     for data_type in data_types:
         print('Plotting %s...' % data_type)
@@ -66,14 +71,16 @@ def plot_HTSOHM(
             fig = plt.figure(
                 figsize = ( 2 * len(generations), 2 * len(z_bins) )
             )
-            fig_title = '%s\n' % run_id + \
-                'gen. %s thru %s\n' % (generations[0], generations[-1]) + \
-                'bin %s thru %s' % (z_bins[0], z_bins[-1])
-            fig.suptitle(fig_title)
+#            fig_title = '%s\n' % run_id + \
+#                'gen. %s thru %s\n' % (generations[0], generations[-1]) + \
+#                'bin %s thru %s' % (z_bins[0], z_bins[-1])
+#            fig.suptitle(fig_title)
 
+            column = 0
             for generation in generations:
                 print('\t\tgeneration:\t%s' % generation)
 
+                column += 1
                 for z_bin in z_bins:
                     print('\t\t\tz_bin:\t%s' % z_bin)
 
@@ -83,7 +90,7 @@ def plot_HTSOHM(
                         row = rows = 1
 
                     columns = len(generations)
-                    column = generations.index(generation) + 1
+#                    column = generations.index(generation) + 1
                     if len(generations) == 1:
                         column = columns = 1
 
@@ -100,7 +107,9 @@ def plot_HTSOHM(
                             config, ax, z_bins, generations,
                             labels,
                             highlight_children,
-                            highlight_parents
+                            highlight_parents,
+                            pick_parents,
+                            pick_bins
                         )
 
                     elif data_type == 'BinCounts':
@@ -136,4 +145,5 @@ def plot_HTSOHM(
                 dpi = 96 * 8
             )
             plt.cla()
+            plt.close(fig)
     print('...done!')

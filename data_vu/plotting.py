@@ -14,8 +14,10 @@ def plot_points(
         run_id, gen,
         config, ax, z_bins, generations,
         labels = None,
-        highlight_children='on',
-        highlight_parents='off'
+        highlight_children = 'off',
+        highlight_parents = 'off',
+        pick_parents = 'off',
+        pick_bins = 'off'
     ):
     """Create scatterplot 'x' v. 'y' either by plotting a z-axis slice,
         or all slices at once.
@@ -31,6 +33,7 @@ def plot_points(
         labels (str): None(default), `first_only`, `all`
         highlight_children (str): `on`(default), `off`
         highlight_parents (str): `on`, `off`(default)
+        pick_parents (str): `on`, `off`(default)
 
     Returns:
         None
@@ -66,11 +69,20 @@ def plot_points(
     elif labels == 'all':
         plt.xlabel(x)
         plt.ylabel(y)
-
-    if highlight_children == 'off':
-        child_colour = 'k'
-    elif highlight_children == 'on':
-        child_colour = 'r'
+    elif labels == 'grid_only':
+        ax.tick_params(labelbottom=False, labelleft=False)
+        number_of_bins = config['number_of_convergence_bins']
+        x_ticks = np.arange(
+            x_limits[0], x_limits[1] + 0.01,
+            (x_limits[1] - x_limits[0]) / float(number_of_bins)
+        )
+        ax.set_xticks(x_ticks)
+        y_ticks = np.arange(
+            y_limits[0], y_limits[1] + 0.01,
+            (y_limits[1] - y_limits[0]) / float(number_of_bins)
+        )
+        ax.set_yticks(y_ticks)
+        plt.grid(b = True, which = 'both')
 
     for i in range(gen):
         values = query_points(x, y, z_bin, run_id, i)
@@ -80,31 +92,103 @@ def plot_points(
                 marker='o', 
                 facecolors='k',
                 edgecolors='none',
-                alpha=0.2, s=2
+                alpha=0.5, s=2
             )
 
-    values = query_points(x, y, z_bin, run_id, gen)
-    for i in values:
-        plt.scatter(
-            i[0], i[1],
-            marker='o',
-            facecolors=child_colour,
-            edgecolors='none',
-            alpha=0.6, s=2
-        )
-
-    if highlight_parents == 'on':
-        if gen != 0:
-            values = query_parents(x, y, z_bin, run_id, gen)
-            for i in values:
+    if highlight_children == 'off':
+        child_colour = 'k'
+    elif highlight_children == 'on':
+        child_colour = 'r'
+        values = query_points(x, y, z_bin, run_id, gen)
+        for i in values:
+            plt.scatter(
+                i[0], i[1],
+                marker='o',
+                facecolors=child_colour,
+                edgecolors='none',
+                alpha=0.5, s=2
+            )
+    elif highlight_children == 'top_five':
+        top_five = find_most_children(x, y, z_bin, run_id, gen)
+        colors = [
+            ['red', 'darkred'],
+            ['blue', 'darkblue'],
+            ['green', 'darkgreen'],
+            ['violet', 'darkviolet'],
+            ['orange', 'darkorange']
+        ]
+        counter = 0
+        for values in top_five:
+            parent_color = colors[counter][0]
+            child_color = colors[counter][1]
+            print(values[0][0])
+            plt.scatter(
+                *values[0][0],
+                marker='o',
+                facecolors=parent_color,
+                edgecolors='none',
+                s=4
+            )
+            for child_point in values[1]:
+                print(child_point)
                 plt.scatter(
-                    i[0][0], i[0][1],
+                    *child_point,
                     marker='o',
-                    facecolors='none',
-                    edgecolors='y',
-                    linewidth='0.2',
-                    alpha=0.6, s=4
+                    facecolors=child_color,
+                    edgecolors='none',
+                    alpha=0.5, s=2
                 )
+            counter += 1
+    if highlight_parents == 'on':
+#        if gen != 0:
+# WATCH OUT!!!
+        values = query_parents(x, y, z_bin, run_id, gen)
+        for i in values:
+            plt.scatter(
+                i[0][0], i[0][1],
+                marker='o',
+                facecolors='none',
+                edgecolors='g',
+                linewidth='0.2',
+                alpha=0.5, s=4
+            )
+    if pick_parents == 'on':
+        parents = select_parents(x, y, z_bin, run_id, gen)
+        for id in parents:
+            if z_bin != None:
+                parent_z_bin = query_z_bin(x, y, id)[0]
+                if parent_z_bin == z_bin:
+                    point = query_material(x, y, id)
+                    plt.scatter(
+                        point[0][0], point[0][1],
+                        marker = 'o',
+                        facecolors = 'none',
+                        edgecolors = 'g',
+                        linewidth = '0.2',
+                        alpha = 0.5, s = 4
+                    )
+            else: 
+                point = query_material(x, y, id)
+                plt.scatter(
+                    point[0][0], point[0][1],
+                    marker = 'o',
+                    facecolors = 'none',
+                    edgecolors = 'g',
+                    linewidth = '0.2',
+                    alpha = 0.5, s = 4
+                )
+    if pick_bins == 'on':
+        BC_x = x + '_bin'
+        BC_y = y + '_bin'
+        bins = query_bin_counts(BC_x, BC_y, z_bin, run_id, gen)[:5]
+        for i in bins:
+            add_square(
+                x, y,
+                i[0], i[1],
+                'none',
+                'g',
+                ax, config
+            )
 
 def add_square(
         x, y, 
@@ -163,7 +247,7 @@ def plot_bin_counts(
     plt.xlim(x_limits)
     plt.ylim(y_limits)
     
-    if labels == None:
+    if labels == None or labels == 'grid_only':
         plt.tick_params(
             axis='both', which='both', bottom='off', top='off', labelbottom='off',
             right='off', left='off', labelleft='off'
@@ -189,7 +273,7 @@ def plot_bin_counts(
         plt.xlabel(x)
         plt.ylabel(y)
 
-    max_count = get_max_count(run_id)
+    max_count = get_max_count(run_id, gen)
     values = query_bin_counts(x, y, z_bin, run_id, gen)
     for i in values:
         color = cm.Reds( float(i[2]) / float(max_count) )
@@ -214,17 +298,17 @@ def plot_bin_counts(
                     2
                 )
 
-    if highlight_children == 'on':
-        values = query_child_bins(x, y, z_bin, run_id, gen)
-        for i in values:
-            add_square(
-                x, y,
-                i[0], i[1],
-                'none',
-                'r',
-                ax, config,
-                1, ':'
-            )
+#    if highlight_children == 'on':
+#        values = query_child_bins(x, y, z_bin, run_id, gen)
+#        for i in values:
+#            add_square(
+#                x, y,
+#                i[0], i[1],
+#                'none',
+#                'r',
+#                ax, config,
+#                1, ':'
+#            )
 
 def plot_mutation_strengths(
         x, y, z_bin,
@@ -297,7 +381,11 @@ def plot_mutation_strengths(
 
     if highlight_parents == 'on':
         if gen != 0:
-            values = query_parents(x, y, z_bin, run_id, gen)
+            values = query_parents(
+                x[:2] + '_bin',
+                y[:2] + '_bin',
+                z_bin,
+                run_id, gen)
             for i in values:
                 add_square(
                     x, y,
@@ -309,7 +397,12 @@ def plot_mutation_strengths(
                 )
 
     if highlight_children == 'on':
-        values = query_child_bins(x, y, z_bin, run_id, gen)
+        values = query_child_bins(
+            x[:2] + '_bin',
+            y[:2] + '_bin',
+            z_bin,
+            run_id, gen
+        )
         for i in values:
             add_square(
                 x, y,
@@ -319,3 +412,23 @@ def plot_mutation_strengths(
                 ax, config,
                 1, ':'
             )
+
+def plot_convergence(run_id, generations):
+    fig = plt.figure(figsize = (7, 4))
+    plt.tick_params(axis='both', which='both', labelbottom='off', labelleft='off')
+    convergence = [evaluate_convergence(run_id, i) for i in range(generations)]
+    plt.scatter(
+        range(generations), convergence,
+        marker='o', facecolors='r', edgecolors='none'
+    )
+    plt.xlim(0, generations)
+    plt.ylim(0, 2500000)
+    plt.savefig(
+        '%s_convergence_%sgens.png' % (run_id, generations),
+        bbox_inches = 'tight',
+        pad_inches = 0,
+        dpi = 96 * 8
+    )
+    plt.cla()
+    plt.close(fig)
+    print('...done!')
