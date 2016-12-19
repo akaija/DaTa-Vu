@@ -3,3 +3,4 @@
 output/*
 settings/*
 data_vu/config/*
+data_vu/db/trash/*
