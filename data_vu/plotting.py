@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import numpy as np
+from sqlalchemy import *
 
 from data_vu.utilities import *
-from data_vu.queries import *
-from data_vu.files import load_config_file
+from data_vu.db.queries import *
+from data_vu.db.__init__ import engine
 
 def plot_points(
         x, y, z_bin,
@@ -83,31 +84,45 @@ def plot_points(
         )
         ax.set_yticks(y_ticks)
         plt.grid(b = True, which = 'both')
-
+    
+    x_ = []
+    y_ = []
     for i in range(gen):
-        values = query_points(x, y, z_bin, run_id, i)
-        for i in values:
-            plt.scatter(
-                i[0], i[1],
-                marker='o', 
-                facecolors='k',
-                edgecolors='none',
-                alpha=0.5, s=2
-            )
+        print('i\t%s' % i)
+        s = query_points(x, y, z_bin, run_id, i)
+        result = engine.execute(s)
+        for row in result:
+            x_.append(row[0])
+            y_.append(row[1])
+        result.close()
+    plt.scatter(
+        x_, y_,
+        marker='o', 
+        facecolors='k',
+        edgecolors='none',
+        alpha=0.5, s=2
+    )
 
     if highlight_children == 'off':
         child_colour = 'k'
     elif highlight_children == 'on':
         child_colour = 'r'
-        values = query_points(x, y, z_bin, run_id, gen)
-        for i in values:
-            plt.scatter(
-                i[0], i[1],
-                marker='o',
-                facecolors=child_colour,
-                edgecolors='none',
-                alpha=0.5, s=2
-            )
+        s = query_points(x, y, z_bin, run_id, gen)
+        result = engine.execute(s)
+        x_ = []
+        y_ = []
+        for row in result:
+            x_.append(row[0])
+            y_.append(row[1])
+        result.close()
+        plt.scatter(
+            x_, y_,
+            marker='o',
+            facecolors=child_colour,
+            edgecolors='none',
+            alpha=0.5, s=2
+        )
+
     elif highlight_children == 'top_five':
         top_five = find_most_children(x, y, z_bin, run_id, gen)
         colors = [
@@ -152,31 +167,31 @@ def plot_points(
                 linewidth='0.2',
                 alpha=0.5, s=4
             )
-    if pick_parents == 'on':
-        parents = select_parents(x, y, z_bin, run_id, gen)
-        for id in parents:
-            if z_bin != None:
-                parent_z_bin = query_z_bin(x, y, id)[0]
-                if parent_z_bin == z_bin:
-                    point = query_material(x, y, id)
-                    plt.scatter(
-                        point[0][0], point[0][1],
-                        marker = 'o',
-                        facecolors = 'none',
-                        edgecolors = 'g',
-                        linewidth = '0.2',
-                        alpha = 0.5, s = 4
-                    )
-            else: 
-                point = query_material(x, y, id)
-                plt.scatter(
-                    point[0][0], point[0][1],
-                    marker = 'o',
-                    facecolors = 'none',
-                    edgecolors = 'g',
-                    linewidth = '0.2',
-                    alpha = 0.5, s = 4
-                )
+#    if pick_parents == 'on':
+#        parents = select_parents(x, y, z_bin, run_id, gen)
+#        for id in parents:
+#            if z_bin != None:
+#                parent_z_bin = query_z_bin(x, y, id)[0]
+#                if parent_z_bin == z_bin:
+#                    point = query_material(x, y, id)
+#                    plt.scatter(
+#                        point[0][0], point[0][1],
+#                        marker = 'o',
+#                        facecolors = 'none',
+#                        edgecolors = 'g',
+#                        linewidth = '0.2',
+#                        alpha = 0.5, s = 4
+#                    )
+#            else: 
+#                point = query_material(x, y, id)
+#                plt.scatter(
+#                    point[0][0], point[0][1],
+#                    marker = 'o',
+#                    facecolors = 'none',
+#                    edgecolors = 'g',
+#                    linewidth = '0.2',
+#                    alpha = 0.5, s = 4
+#                )
     if pick_bins == 'on':
         BC_x = x + '_bin'
         BC_y = y + '_bin'
@@ -273,30 +288,49 @@ def plot_bin_counts(
         plt.xlabel(x)
         plt.ylabel(y)
 
-    max_count = get_max_count(run_id, gen)
-    values = query_bin_counts(x, y, z_bin, run_id, gen)
-    for i in values:
-        color = cm.Reds( float(i[2]) / float(max_count) )
+    min_count, max_count, avg_count = get_max_count(x, y, z_bin, run_id, gen)
+    result = engine.execute(query_bin_counts(x, y, z_bin, run_id, gen))
+    for row in result:
+        if row[2] >= avg_count:
+            max_dev = max_count - avg_count
+            if max_dev != 0:
+                dev = (row[2] - avg_count) / (2 * max_dev)
+                fraction = 0.5 + dev
+            else:
+                fraction = 0.5
+        elif row[2] < avg_count:
+            max_dev = avg_count - min_count
+            if max_dev != 0:
+                dev = (avg_count - row[2]) / (2 * max_dev)
+                fraction = 0.5 - dev
+            else:
+                fraction = 0.5
+#        count_range = max_count - min_count       
+#        fraction = (count_range - (max_count - i[2])) / count_range
+        color = cm.brg(fraction)
         add_square(
             x, y,
-            i[0], i[1],
+            row[0], row[1],
             color,
             None,
             ax, config
         )
+    result.close()
 
     if highlight_parents == 'on':
         if gen != 0:
-            values = query_parents(x, y, z_bin, run_id, gen)
-            for i in values:
+            s = query_parents(x, y, z_bin, run_id, gen)
+            result = engine.execute(s)
+            for row in result:
                 add_square(
                     x, y,
-                    i[0][0], i[0][1],
+                    row[0][0], i[0][1],
                     'none',
                     'y',
                     ax, config,
                     2
                 )
+            result.close()
 
 #    if highlight_children == 'on':
 #        values = query_child_bins(x, y, z_bin, run_id, gen)
@@ -370,7 +404,8 @@ def plot_mutation_strengths(
  
     values = query_mutation_strength(x, y, z_bin, run_id, gen)
     for i in values:
-        color = cm.Reds( i[2] )
+        print('bins\t%s\t%s\t\tstrength\t%s' % (i[0], i[1], i[2]))
+        color = cm.Reds( 1 - i[2] )
         add_square(
             x, y,
             i[0], i[1],
@@ -397,16 +432,12 @@ def plot_mutation_strengths(
                 )
 
     if highlight_children == 'on':
-        values = query_child_bins(
-            x[:2] + '_bin',
-            y[:2] + '_bin',
-            z_bin,
-            run_id, gen
-        )
-        for i in values:
+        result = engine.execute( query_child_bins(
+            x[:2] + '_bin', y[:2] + '_bin', z_bin, run_id, gen)) 
+        for row in result:
             add_square(
                 x, y,
-                i[0], i[1],
+                row[0], row[1],
                 'none',
                 'r',
                 ax, config,
@@ -422,7 +453,7 @@ def plot_convergence(run_id, generations):
         marker='o', facecolors='r', edgecolors='none'
     )
     plt.xlim(0, generations)
-    plt.ylim(0, 2500000)
+    plt.ylim(0, max(convergence))
     plt.savefig(
         '%s_convergence_%sgens.png' % (run_id, generations),
         bbox_inches = 'tight',

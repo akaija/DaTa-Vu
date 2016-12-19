@@ -3,8 +3,8 @@ import os
 import matplotlib.pyplot as plt
 
 from data_vu.utilities import *
-from data_vu.queries import *
-from data_vu.files import load_config_file
+from data_vu.db.__init__ import materials, mutation_strengths
+from data_vu.db.queries import *
 from data_vu.plotting import *
 
 def plot_HTSOHM(
@@ -14,8 +14,8 @@ def plot_HTSOHM(
         data_types,
         axes = [
             ['vf', 'sa'],
-            ['vf', 'ml'],
-            ['sa', 'ml']
+            ['vf', 'gl'],
+            ['sa', 'gl']
         ],
         labels = 'first_only',
         highlight_parents = 'off',
@@ -31,7 +31,7 @@ def plot_HTSOHM(
         z_bins (str, int, <class 'list'>): `all`, None, [0, 1, 2, ...], etc.
         data_types (str, <class 'list'>): `all`, `DataPoints`, `BinCounts`,
             `MutationStrengths`, or list of these.
-        axes (<class 'list'>): ex. [['vf', 'sa'], ['vf', 'ml'], ['sa', 'ml']]
+        axes (<class 'list'>): ex. [['vf', 'sa'], ['vf', 'gl'], ['sa', 'gl']]
         labels (str): `first_only`(default), `all`, None.
         highlight_parents (str): `on`(default), `off`.
         highlight_children (str): `on`(default), `off`.
@@ -53,8 +53,8 @@ def plot_HTSOHM(
     if axes == 'all':
         axes = [
             ['vf', 'sa'],
-            ['vf', 'ml'],
-            ['sa', 'ml']
+            ['vf', 'gl'],
+            ['sa', 'gl']
         ]
 
     generations = make_list(generations)
@@ -142,7 +142,7 @@ def plot_HTSOHM(
                     'gens%sto%s.png' % (generations[0], generations[-1]),
                 bbox_inches = 'tight',
                 pad_inches = 0,
-                dpi = 96 * 8
+                dpi = 96 * 4
             )
             plt.cla()
             plt.close(fig)
