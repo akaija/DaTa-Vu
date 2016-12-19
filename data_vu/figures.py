@@ -142,7 +142,8 @@ def plot_HTSOHM(
                     'gens%sto%s.png' % (generations[0], generations[-1]),
                 bbox_inches = 'tight',
                 pad_inches = 0,
-                dpi = 96 * 4
+                dpi = 96 * 4,
+                transparent = True
             )
             plt.cla()
             plt.close(fig)

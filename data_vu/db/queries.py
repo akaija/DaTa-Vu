@@ -67,9 +67,10 @@ def query_bin_counts(x, y, z_bin, run_id, gen):
     cols = [get_attr(x), get_attr(y), func.count(materials.c.uuid)]
     rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen)
     sort = [get_attr(x), get_attr(y)]
+    ordr = [func.count(materials.c.uuid)]
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
-    return select(cols, rows).group_by(*sort)
+    return select(cols, rows).group_by(*sort).order_by(asc(*ordr))
 
 def get_max_count(x, y, z_bin, run_id, gen):
     """Query database for highest bin-count.
@@ -82,7 +83,7 @@ def get_max_count(x, y, z_bin, run_id, gen):
 
     """
     cols = [func.count(materials.c.uuid)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen)
     sort = [get_attr(x), get_attr(y)]
     if z_bin != 0:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
@@ -199,14 +200,21 @@ def query_mutation_strength(x, y, z_bin, run_id, gen):
             for row in result:
                 ms = row[mutation_strengths.c.strength]
             result.close()
-            if 'ms' in vars():
-                line = [x, y, ms]
-            else:
-                line = [x, y, initial_strength]
+            if 'ms' not in vars():
+                ms = initial_strength
+            line = [x, y, ms]
             vals.append(line)
     return vals
 
-def query_material(x, y, id):
+def get_all_bins(x, y, z_bin, run_id, gen):
+    cols = [get_attr(x), get_attr(y)]
+    rows = and_(materials.c.generation <= gen,
+            materials.c.run_id == run_id)
+    if z_bin != None:
+        rows = and_(rows, get_z_attr(x, y) == z_bin)
+    return select(cols, rows)
+
+def query_material(x, y, z_bin, id):
     """Query values `x` and `y` for one material.
    
     Args:
@@ -218,7 +226,17 @@ def query_material(x, y, id):
        value (list): [x(float, int), y(float, int)]
    
     """
-    return select([get_attr(x), get_attr(y)], materials.c.id == id)
+    result = engine.execute(
+        select([get_attr(x), get_attr(y)],
+        and_(materials.c.id == id, get_z_attr(x, y) == z_bin))
+    )
+    x_ = []
+    y_ = []
+    for row in result:
+        x_.append(row[0])
+        y_.append(row[1])
+    result.close()
+    return x_, y_
 
 def query_parents(x, y, z_bin, run_id, gen):
     """Find parent-materials and return data.
@@ -235,19 +253,18 @@ def query_parents(x, y, z_bin, run_id, gen):
   
     """
     cols = [materials.c.parent_id]
-    rows = and_(material.c.run_id == run_id, material.c.generation == gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen)
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
-    vals = []
-    result1 = engine.execute(select(cols, rows))
-    for row1 in result1:
-        result2 = engine.execute(query_material(x, y, row[0]))
-        for row2 in result2:
-            val = [row2[0], row2[1]]
-            vals.append(val)
-        result2.close()
-    result1.close()
-    return vals
+    result = engine.execute(select(cols, rows))
+    x_ = []
+    y_ = []
+    for row in result:
+        x_list, y_list = query_material(x, y, z_bin, row[materials.c.parent_id])
+        x_ += x_list
+        y_ += y_list
+    result.close()
+    return x_, y_
 
 def query_child_bins(x, y, z_bin, run_id, gen):
     """Query bin-coordinates for across generation.
