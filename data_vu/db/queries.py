@@ -42,8 +42,13 @@ def query_points(x, y, z_bin, run_id, gen):
     If z_bin == None: all z_bins are queried, instead of one slice.
 
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [get_attr(x), get_attr(y)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen,
+            or_(materials.c.retest_passed == None,
+                materials.c.retest_passed == True),
+            materials.c.generation_index <= generation_size)
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
     return select(cols, rows)
@@ -64,8 +69,13 @@ def query_bin_counts(x, y, z_bin, run_id, gen):
     If z_bin == None: all z_bins are queried, instead of one slice.
 
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [get_attr(x), get_attr(y), func.count(materials.c.uuid)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
+            or_(materials.c.retest_passed == None,
+                materials.c.retest_passed == True),
+            materials.c.generation_index <= generation_size)
     sort = [get_attr(x), get_attr(y)]
     ordr = [func.count(materials.c.uuid)]
     if z_bin != None:
@@ -83,7 +93,10 @@ def get_max_count(x, y, z_bin, run_id, gen):
 
     """
     cols = [func.count(materials.c.uuid)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
+            or_(materials.c.retest_passed == None,
+                materials.c.retest_passed == True),
+            materials.c.generation_index <= generation_size)
     sort = [get_attr(x), get_attr(y)]
     if z_bin != 0:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
@@ -97,7 +110,10 @@ def get_max_count(x, y, z_bin, run_id, gen):
 
 def find_most_children(x, y, z_bin, run_id, gen):
     cols = [materials.c.parent_id]
-    rows = and_(material.c.run_id == run_id, materials.c.generation == gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen,
+            or_(materials.c.retest_passed == None,
+                materials.c.retest_passed == True),
+            materials.c.generation_index <= generation_size)
     sort = func.count(materials.c.parent_id)
     s = select(cols, rows).group_by(*cols).order_by(desc(sort))
     result = engine.execute(s)
@@ -298,7 +314,10 @@ def evaluate_convergence(run_id, gen):
 
     """
     cols = [func.count(materials.c.uuid)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
+            or_(materials.c.retest_passed == None,
+                materials.c.retest_passed == True),
+            materials.c.generation_index <= generation_size)
     sort = [materials.c.gas_loading_bin,
             materials.c.surface_area_bin,
             materials.c.void_fraction_bin]
