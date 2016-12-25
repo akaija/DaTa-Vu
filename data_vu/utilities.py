@@ -16,29 +16,29 @@ def load_config_file(run_id):
     return config
 
 def get_limits(x, config):
-    if 'gl' in x:
-        limits = config['gas_loading_limits']
+    if 'ga' in x:
+        limits = config['gas_adsorption']['limits']
     elif 'sa' in x:
-        limits = config['surface_area_limits']
+        limits = config['surface_area']['limits']
     elif 'vf' in x:
-        limits = config['void_fraction_limits']
+        limits = config['helium_void_fraction']['limits']
     return limits
 
 def get_attr(x):
-    if x == 'gl':
-        attr = getattr(materials.c, 'gl_absolute_volumetric_loading')
+    if x == 'ga':
+        attr = getattr(materials.c, 'ga_absolute_volumetric_loading')
     elif x == 'sa':
         attr = getattr(materials.c, 'sa_volumetric_surface_area')
     elif x == 'vf':
         attr = getattr(materials.c, 'vf_helium_void_fraction')
-    elif x == 'gl_mutation_strength':
-        attr = getattr(mutation_strengths.c, 'gas_loading_bin')
+    elif x == 'ga_mutation_strength':
+        attr = getattr(mutation_strengths.c, 'gas_adsorption_bin')
     elif x == 'sa_mutation_strength':
         attr = getattr(mutation_strengths.c, 'surface_area_bin')
     elif x == 'vf_mutation_strength':
         attr = getattr(mutation_strengths.c, 'void_fraction_bin')
-    elif x == 'gl_bin':
-        attr = getattr(materials.c, 'gas_loading_bin')
+    elif x == 'ga_bin':
+        attr = getattr(materials.c, 'gas_adsorption_bin')
     elif x == 'sa_bin':
         attr = getattr(materials.c, 'surface_area_bin')
     elif x == 'vf_bin':
@@ -53,11 +53,11 @@ def get_width(x, config):
     return (x_limits[1] - x_limits[0]) / config['number_of_convergence_bins']
 
 def get_z_attr(x, y):
-    if x[:2] in ['gl', 'sa'] and y[:2] in ['gl', 'sa']:
+    if x[:2] in ['ga', 'sa'] and y[:2] in ['ga', 'sa']:
         z_attr = getattr(materials.c, 'void_fraction_bin')
     elif x[:2] in ['sa', 'vf'] and y[:2] in ['sa', 'vf']:
-        z_attr = getattr(materials.c, 'gas_loading_bin')
-    elif x[:2] in ['gl', 'vf'] and y[:2] in ['gl', 'vf']:
+        z_attr = getattr(materials.c, 'gas_adsorption_bin')
+    elif x[:2] in ['ga', 'vf'] and y[:2] in ['ga', 'vf']:
         z_attr = getattr(materials.c, 'surface_area_bin')
     else:
         print('--flag not understood')

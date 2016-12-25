@@ -14,8 +14,8 @@ def plot_HTSOHM(
         data_types,
         axes = [
             ['vf', 'sa'],
-            ['vf', 'gl'],
-            ['sa', 'gl']
+            ['vf', 'ga'],
+            ['sa', 'ga']
         ],
         labels = 'first_only',
         highlight_parents = 'off',
@@ -31,7 +31,7 @@ def plot_HTSOHM(
         z_bins (str, int, <class 'list'>): `all`, None, [0, 1, 2, ...], etc.
         data_types (str, <class 'list'>): `all`, `DataPoints`, `BinCounts`,
             `MutationStrengths`, or list of these.
-        axes (<class 'list'>): ex. [['vf', 'sa'], ['vf', 'gl'], ['sa', 'gl']]
+        axes (<class 'list'>): ex. [['vf', 'sa'], ['vf', 'ga'], ['sa', 'ga']]
         labels (str): `first_only`(default), `all`, None.
         highlight_parents (str): `on`(default), `off`.
         highlight_children (str): `on`(default), `off`.
@@ -53,8 +53,8 @@ def plot_HTSOHM(
     if axes == 'all':
         axes = [
             ['vf', 'sa'],
-            ['vf', 'gl'],
-            ['sa', 'gl']
+            ['vf', 'ga'],
+            ['sa', 'ga']
         ]
 
     generations = make_list(generations)
