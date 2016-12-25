@@ -1,5 +1,6 @@
 import os
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.patches as patches
@@ -236,7 +237,8 @@ def add_square(
 def plot_bin_counts(
         x, y, z_bin,
         run_id, gen,
-        config, ax, z_bins, generations,
+        config, ax,
+        z_bins, generations,
         labels = None,
         highlight_children='off',
         highlight_parents='off'
@@ -302,36 +304,52 @@ def plot_bin_counts(
         c_.append(row[2])
     result.close()
 #    avg_count = sum(c_) / len(c_)
-    avg_count = median(c_)
-#    max_dev = max([abs(avg_count - min(c_)), abs(avg_count - max(c_))])
-    for i in range(len(c_)):
-        dev = avg_count - c_[i]
-#        color = cm.brg(0.5 + dev)        
-        if c_[i] >= avg_count:
-            max_dev = max(c_) - avg_count
+    if c_ != []:
+        avg_count = median(c_)
+        max_dev = max([abs(avg_count - min(c_)), abs(avg_count - max(c_))])
+#        cax = ax.imshow(c_, cm
+#        cmap = cm.brg
+#        norm = mpl.colors.Normalize(
+#            vmin=avg_count - max_dev, vmax= avg_count + max_dev)
+#        plt.colorbar()
+        for i in range(len(c_)):
             if max_dev != 0:
-                dev = (c_[i] - avg_count) / (2 * max_dev)
-                fraction = 0.5 + dev
-            else:
-                fraction = 0.5
-        elif c_[i] < avg_count:
-            max_dev = avg_count - min(c_)
-            if max_dev != 0:
-                dev = (avg_count - c_[i]) / (2 * max_dev)
-                fraction = 0.5 - dev
-            else:
-                fraction = 0.5
-        count_range = max(c_) - min(c_)       
-        fraction = (count_range - (max(c_) - c_[i])) / count_range
-        color = cm.brg(fraction)
-        add_square(
-            x, y,
-            x_[i], y_[i],
-            color,
-            None,
-            ax, config
-        )
-    result.close()
+                dev = abs(avg_count - c_[i]) / max_dev
+                if c_[i] > avg_count:
+                    fraction = 0.5 + dev
+                elif c_[i] < avg_count:
+                    fraction = 0.5 - dev
+                else:
+                    fraction = 0.5
+
+            
+    #        color = cm.brg(0.5 + dev)        
+#            if c_[i] >= avg_count:
+#                max_dev = max(c_) - avg_count
+#                if max_dev != 0:
+#                    dev = (c_[i] - avg_count) / (2 * max_dev)
+#                    fraction = 0.5 + dev
+#                else:
+#                    fraction = 0.5
+#            elif c_[i] < avg_count:
+#                max_dev = avg_count - min(c_)
+#                if max_dev != 0:
+#                    dev = (avg_count - c_[i]) / (2 * max_dev)
+#                    fraction = 0.5 - dev
+#                else:
+#                    fraction = 0.5
+#            count_range = max(c_) - min(c_)
+#            if count_range != 0:
+#                fraction = (count_range - (max(c_) - c_[i])) / count_range
+                color = cm.brg(fraction)
+                add_square(
+                    x, y,
+                    x_[i], y_[i],
+                    color,
+                    None,
+                    ax, config
+                )
+#       result.close()
 
     if highlight_parents == 'on':
         if gen != 0:
