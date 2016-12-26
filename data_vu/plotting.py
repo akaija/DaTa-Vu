@@ -513,3 +513,19 @@ def plot_convergence(run_id, generations):
     plt.cla()
     plt.close(fig)
     print('...done!')
+
+def barplot_bin_counts(run_id, gen, ax, ymax):
+    result = engine.execute(all_bin_counts(run_id, gen))
+    c = []
+    for row in result:
+        print(row[0])
+        c.append(row[0])
+    result.close()
+    plt.tick_params(
+        axis='both', which='both', bottom='off', top='off', labelbottom='off',
+        right='off', left='off', labelleft='off'
+    )
+    plt.ylim(ymax)
+    ax.bar(range(len(c)), c)
+
+    

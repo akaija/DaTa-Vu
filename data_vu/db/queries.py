@@ -82,6 +82,34 @@ def query_bin_counts(x, y, z_bin, run_id, gen):
         rows = and_(rows, get_z_attr(x, y) == z_bin)
     return select(cols, rows).group_by(*sort).order_by(asc(*ordr))
 
+def all_bin_counts(run_id, gen):
+    """Queries database for bin_counts.
+
+    Args:
+        x (str): `gl`, `sa`, `vf`.
+        y (str): `gl`, `sa`, `vf`.
+        z_bin (int): None, [0, number_of_bins].
+        run_id (str): run identification string.
+        gen (int): generation.
+
+    Returns:
+        values (list): [x_bin, y_bin, bin_count]
+
+    If z_bin == None: all z_bins are queried, instead of one slice.
+
+    """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
+    cols = [func.count(materials.c.uuid)]
+    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
+            or_(materials.c.retest_passed == None,
+                materials.c.retest_passed == True),
+            materials.c.generation_index <= generation_size)
+    sort = [materials.c.gas_loading_bin,
+            materials.c.surface_area_bin,
+            materials.c.void_fraction_bin]
+    return select(cols, rows).group_by(*sort)
+
 def get_max_count(x, y, z_bin, run_id, gen):
     """Query database for highest bin-count.
 
@@ -92,6 +120,8 @@ def get_max_count(x, y, z_bin, run_id, gen):
         max_counts (int): highest bin-count.
 
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [func.count(materials.c.uuid)]
     rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
             or_(materials.c.retest_passed == None,
@@ -109,6 +139,8 @@ def get_max_count(x, y, z_bin, run_id, gen):
         return 0, 0, 0
 
 def find_most_children(x, y, z_bin, run_id, gen):
+    generation_size = load_config_file(run_id)['children_per_generation']
+    
     cols = [materials.c.parent_id]
     rows = and_(materials.c.run_id == run_id, materials.c.generation == gen,
             or_(materials.c.retest_passed == None,
@@ -313,6 +345,8 @@ def evaluate_convergence(run_id, gen):
         variance (float): variance.
 
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [func.count(materials.c.uuid)]
     rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
             or_(materials.c.retest_passed == None,
@@ -322,9 +356,10 @@ def evaluate_convergence(run_id, gen):
             materials.c.surface_area_bin,
             materials.c.void_fraction_bin]
     result = engine.execute(select(cols, rows).group_by(*sort))
-    counts = [row[0] for row in result]
+    c = [row[0] for row in result]
     result.close()
-    return variance(counts)
+    norm_c = [(x - min(c)) / (max(c) - min(c)) for x in c]
+    return variance(norm_c)
 
 def select_parents(x, y, z_bin, run_id, gen, number=100):
     config = load_config_file(run_id)

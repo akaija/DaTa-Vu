@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 
 from data_vu.utilities import *
-from data_vu.db.__init__ import materials, mutation_strengths
+from data_vu.db.__init__ import engine, materials, mutation_strengths
 from data_vu.db.queries import *
 from data_vu.plotting import *
 
@@ -147,4 +147,49 @@ def plot_HTSOHM(
             )
             plt.cla()
             plt.close(fig)
+    print('...done!')
+
+def plot_all_bins(run_id, generations):
+    """Creates subplot figures for different axes and data-types.
+
+    Args:
+        run_id (str): run identification string.
+        generations (str, int, <class 'list'>): `all`, [0, 1, 2, ...], etc.
+        z_bins (str, int, <class 'list'>): `all`, None, [0, 1, 2, ...], etc.
+        data_types (str, <class 'list'>): `all`, `DataPoints`, `BinCounts`,
+            `MutationStrengths`, or list of these.
+        axes (<class 'list'>): ex. [['vf', 'sa'], ['vf', 'gl'], ['sa', 'gl']]
+        labels (str): `first_only`(default), `all`, None.
+        highlight_parents (str): `on`(default), `off`.
+        highlight_children (str): `on`(default), `off`.
+        pick_parents (str): `on`(default), `off`.
+        pick_bins (str): `on`(default), `off`.
+
+    Returns:
+        None
+
+    """
+    c = []
+    result = engine.execute(all_bin_counts(run_id, generations))
+    for row in result:
+        c.append(row[0])
+    result.close()
+    ymax = max(c)
+
+    rows = generations // 10
+    fig = plt.figure(figsize = (2 * (rows), 20))
+    for gen in range(generations):
+        print('Plotting gen %s...' % gen)
+        ax = plt.subplot(rows, 10, gen + 1)
+        barplot_bin_counts(run_id, gen, ax, ymax)
+
+    plt.savefig(
+        '%s_BinCounts_BarPlots_%sGenerations.png' % (run_id, generations),
+        bbox_inches = 'tight',
+        pad_inches = 0,
+        dpi = 96 * 4,
+        transparent = True
+    )
+    plt.cla()
+    plt.close(fig)
     print('...done!')
