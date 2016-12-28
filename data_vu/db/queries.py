@@ -42,8 +42,13 @@ def query_points(x, y, z_bin, run_id, gen):
     If z_bin == None: all z_bins are queried, instead of one slice.
 
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [get_attr(x), get_attr(y)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen,
+            or_(materials.c.retest_passed == None,
+                                materials.c.retest_passed == True),
+                        materials.c.generation_index <= generation_size)
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
     return select(cols, rows)
@@ -64,8 +69,13 @@ def query_bin_counts(x, y, z_bin, run_id, gen):
     If z_bin == None: all z_bins are queried, instead of one slice.
 
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [get_attr(x), get_attr(y), func.count(materials.c.uuid)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
+            or_(materials.c.retest_passed == None,
+                                materials.c.retest_passed == True),
+                        materials.c.generation_index <= generation_size)
     sort = [get_attr(x), get_attr(y)]
     ordr = [func.count(materials.c.uuid)]
     if z_bin != None:
@@ -82,8 +92,13 @@ def get_max_count(x, y, z_bin, run_id, gen):
         max_counts (int): highest bin-count.
 
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [func.count(materials.c.uuid)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
+            or_(materials.c.retest_passed == None,
+                                materials.c.retest_passed == True),
+                        materials.c.generation_index <= generation_size)
     sort = [get_attr(x), get_attr(y)]
     if z_bin != 0:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
@@ -96,8 +111,13 @@ def get_max_count(x, y, z_bin, run_id, gen):
         return 0, 0, 0
 
 def find_most_children(x, y, z_bin, run_id, gen):
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [materials.c.parent_id]
-    rows = and_(material.c.run_id == run_id, materials.c.generation == gen)
+    rows = and_(material.c.run_id == run_id, materials.c.generation == gen,
+            or_(materials.c.retest_passed == None,
+                                materials.c.retest_passed == True),
+                        materials.c.generation_index <= generation_size)
     sort = func.count(materials.c.parent_id)
     s = select(cols, rows).group_by(*cols).order_by(desc(sort))
     result = engine.execute(s)
@@ -226,10 +246,15 @@ def query_material(x, y, z_bin, id):
        value (list): [x(float, int), y(float, int)]
    
     """
-    result = engine.execute(
-        select([get_attr(x), get_attr(y)],
-        and_(materials.c.id == id, get_z_attr(x, y) == z_bin))
-    )
+    if z_bin != None:
+        result = engine.execute(
+            select([get_attr(x), get_attr(y)],
+            and_(materials.c.id == id, get_z_attr(x, y) == z_bin))
+        )
+    else:
+        result = engine.execute(
+            select([get_attr(x), get_attr(y)], materials.c.id == id)
+        )
     x_ = []
     y_ = []
     for row in result:
@@ -252,8 +277,13 @@ def query_parents(x, y, z_bin, run_id, gen):
         values (list): [x(float, int), y(float, int)]
   
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [materials.c.parent_id]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen,
+            or_(materials.c.retest_passed == None,
+                                materials.c.retest_passed == True),
+                        materials.c.generation_index <= generation_size)
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
     result = engine.execute(select(cols, rows))
@@ -280,8 +310,13 @@ def query_child_bins(x, y, z_bin, run_id, gen):
         values (list): [x(float, int), y(float, int)]
 
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [get_attr(x), get_attr(y)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen)
+    rows = and_(materials.c.run_id == run_id, materials.c.generation == gen,
+            or_(materials.c.retest_passed == None,
+                                materials.c.retest_passed == True),
+                        materials.c.generation_index <= generation_size)
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
     return select(cols, rows)
@@ -297,15 +332,21 @@ def evaluate_convergence(run_id, gen):
         variance (float): variance.
 
     """
+    generation_size = load_config_file(run_id)['children_per_generation']
+
     cols = [func.count(materials.c.uuid)]
-    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen)
-    sort = [materials.c.gas_loading_bin,
+    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
+            or_(materials.c.retest_passed == None,
+                                materials.c.retest_passed == True),
+                        materials.c.generation_index <= generation_size)
+    sort = [materials.c.gas_adsorption_bin,
             materials.c.surface_area_bin,
             materials.c.void_fraction_bin]
     result = engine.execute(select(cols, rows).group_by(*sort))
-    counts = [row[0] for row in result]
+    c = [row[0] for row in result]
     result.close()
-    return variance(counts)
+    norm_c = [(x - min(c)) / (max(c) - min(c)) for x in c]
+    return variance(norm_c)
 
 def select_parents(x, y, z_bin, run_id, gen, number=100):
     config = load_config_file(run_id)

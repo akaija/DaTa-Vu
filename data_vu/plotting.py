@@ -85,7 +85,7 @@ def plot_points(
             (y_limits[1] - y_limits[0]) / float(number_of_bins)
         )
         ax.set_yticks(y_ticks)
-        plt.grid(b = True, which = 'both')
+        plt.grid(b = True, which = 'both', linestyle='-', alpha=0.5)
     
     x_ = []
     y_ = []
@@ -101,7 +101,7 @@ def plot_points(
         marker='o', 
         facecolors='k',
         edgecolors='none',
-        alpha=0.5, s=2
+        alpha=0.7, s=2
     )
 
     if highlight_children == 'off':
@@ -121,7 +121,7 @@ def plot_points(
             marker='o',
             facecolors=child_colour,
             edgecolors='none',
-            alpha=0.5, s=2
+            alpha=0.7, s=2
         )
 
     elif highlight_children == 'top_five':
@@ -145,7 +145,6 @@ def plot_points(
                 s=4
             )
             for child_point in values[1]:
-                print(child_point)
                 plt.scatter(
                     *child_point,
                     marker='o',
@@ -161,9 +160,9 @@ def plot_points(
             x_, y_,
             marker='o',
             facecolors='none',
-            edgecolors='g',
-            linewidth='0.2',
-            alpha=0.5, s=4
+            edgecolors='k',
+            linewidth='0.4',
+            alpha=0.5, s=5
         )
 #    if pick_parents == 'on':
 #        parents = select_parents(x, y, z_bin, run_id, gen)
@@ -205,7 +204,7 @@ def plot_points(
                 x, y,
                 b[0], b[1],
                 'none',
-                'g',
+                'k',
                 ax, config
             )
 
@@ -494,18 +493,25 @@ def plot_mutation_strengths(
                 1, ':'
             )
 
-def plot_convergence(run_id, generations):
-    fig = plt.figure(figsize = (7, 4))
+def plot_convergence(run0, run1, run2, generations):
+    fig = plt.figure(figsize = (6, 4))
     plt.tick_params(axis='both', which='both', labelbottom='off', labelleft='off')
-    convergence = [evaluate_convergence(run_id, i) for i in range(generations)]
-    plt.scatter(
-        range(generations), convergence,
-        marker='o', facecolors='r', edgecolors='none'
-    )
+    conv0 = [evaluate_convergence(run0, i) for i in range(generations)]
+    conv1 = [evaluate_convergence(run1, i) for i in range(generations)]
+    conv2 = [evaluate_convergence(run2, i) for i in range(generations)]
+    plt.scatter(range(generations), conv0,
+            marker='o', facecolors='r', edgecolors='none', alpha=0.5)
+    plt.scatter(range(generations), conv1,
+            marker='o', facecolors='g', edgecolors='none', alpha=0.5)
+    plt.scatter(range(generations), conv2,
+            marker='o', facecolors='b', edgecolors='none', alpha=0.5)
     plt.xlim(0, generations)
-    plt.ylim(0, max(convergence))
+    y_lim = 0.1 # 1.1 * max([max(conv0), max(conv1), max(conv2)])
+    plt.ylim(0, y_lim)
+    print('ylim\t%s' % y_lim)
     plt.savefig(
-        '%s_convergence_%sgens.png' % (run_id, generations),
+        'XeConvergence_%sgens.png' % generations,
+#        '%s_convergence_%sgens.png' % (run_id, generations),
         bbox_inches = 'tight',
         pad_inches = 0,
         dpi = 96 * 8
