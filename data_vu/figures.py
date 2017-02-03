@@ -18,10 +18,9 @@ def plot_HTSOHM(
             ['sa', 'ga']
         ],
         labels = 'first_only',
-        highlight_parents = 'off',
-        highlight_children = 'on',
-        pick_parents = 'off',
-        pick_bins = 'off'
+        parents = 'off',
+        children = 'on',
+        top_bins = None
     ):
     """Creates subplot figures for different axes and data-types.
 
@@ -33,10 +32,9 @@ def plot_HTSOHM(
             `MutationStrengths`, or list of these.
         axes (<class 'list'>): ex. [['vf', 'sa'], ['vf', 'ga'], ['sa', 'ga']]
         labels (str): `first_only`(default), `all`, None.
-        highlight_parents (str): `on`(default), `off`.
-        highlight_children (str): `on`(default), `off`.
-        pick_parents (str): `on`(default), `off`.
-        pick_bins (str): `on`(default), `off`.
+        parents (str): `on`(default), `off`.
+        children (str): `on`(default), `off`.
+        top_bins (str): `on`(default), `off`.
 
     Returns:
         None
@@ -105,36 +103,32 @@ def plot_HTSOHM(
                             x, y, z_bin,
                             run_id, generation,
                             config, ax, z_bins, generations,
-                            labels,
-                            highlight_children,
-                            highlight_parents,
-                            pick_parents,
-                            pick_bins
+                            labels, children, parents, top_bins
                         )
 
-                    elif data_type == 'BinCounts':
-                        BC_x = x + '_bin'
-                        BC_y = y + '_bin'
-                        plot_bin_counts(
-                            BC_x, BC_y, z_bin,
-                            run_id, generation,
-                            config, ax, z_bins, generations,
-                            labels,
-                            highlight_children,
-                            highlight_parents
-                        )
-
-                    elif data_type == 'MutationStrengths':
-                        MS_x = x + '_mutation_strength'
-                        MS_y = y + '_mutation_strength'
-                        plot_mutation_strengths(
-                            MS_x, MS_y, z_bin,
-                            run_id, generation,
-                            config, ax, z_bins, generations,
-                            labels,
-                            highlight_children,
-                            highlight_parents
-                        )
+#                    elif data_type == 'BinCounts':
+#                        BC_x = x + '_bin'
+#                        BC_y = y + '_bin'
+#                        plot_bin_counts(
+#                            BC_x, BC_y, z_bin,
+#                            run_id, generation,
+#                            config, ax, z_bins, generations,
+#                            labels,
+#                            highlight_children,
+#                            highlight_parents
+#                        )
+#
+#                    elif data_type == 'MutationStrengths':
+#                        MS_x = x + '_mutation_strength'
+#                        MS_y = y + '_mutation_strength'
+#                        plot_mutation_strengths(
+#                            MS_x, MS_y, z_bin,
+#                            run_id, generation,
+#                            config, ax, z_bins, generations,
+#                            labels,
+#                            highlight_children,
+#                            highlight_parents
+#                        )
 
             plt.savefig(
                 '%s_%s_%s_%s_' % (run_id, x, y, data_type) +

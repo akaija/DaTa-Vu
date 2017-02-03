@@ -48,7 +48,7 @@ def labeling(labels, ax, config):
         ax.set_yticks(y_ticks)
         plt.grid(b = True, which = 'both', linestyle='-', alpha=0.5)
 
-def highlight_children(children):
+def highlight_children(x, y, z_bin, run_id, gen, children, data_type):
     if data_type == 'DataPoints':
         if children == 'off':
             child_colour = 'k'
@@ -102,7 +102,7 @@ def highlight_children(children):
 #    elif data_type == 'BinCounts':
 #    elif data_type == 'MutationStrength':
 
-def hightlight_parents():
+def hightlight_parents(x, y, z_bin, run_id, gen):
     x_, y_ = query_parents(x, y, z_bin, run_id, gen)
     if len(x_) > 0 and len(y_) > 0:
         plt.scatter(
@@ -113,5 +113,27 @@ def hightlight_parents():
             linewidth='0.4',
             alpha=0.5, s=5
         )
+
+def highlight_top_bins(x, y, z_bin, run_id, gen, pick_bins):
+    if pick_bins != None:
+        BC_x = x + '_bin'
+        BC_y = y + '_bin'
+        result = engine.execute(
+                query_bin_counts(
+                    BC_x, BC_y, z_bin, run_id, gen - 1
+                    ).limit(pick_bins))
+        bins = []
+        for row in result:
+            line = [row[0], row[1]]
+            bins.append(line)
+        result.close()
+        for b in bins:
+            add_square(
+                x, y,
+                b[0], b[1],
+                'none',
+                'k',
+                ax, config
+            )
 
 

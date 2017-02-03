@@ -13,15 +13,15 @@ from data_vu.plotting_utilities import *
 from data_vu.db.queries import *
 from data_vu.db.__init__ import engine
 
+
 def plot_points(
         x, y, z_bin,
         run_id, gen,
         config, ax, z_bins, generations,
         labels = None,
-        highlight_children = 'off',
-        highlight_parents = 'off',
-        pick_parents = 'off',
-        pick_bins = 'off'
+        children = 'off',
+        parents = 'off',
+        top_bins = None
     ):
     """Create scatterplot 'x' v. 'y' either by plotting a z-axis slice,
         or all slices at once.
@@ -48,8 +48,10 @@ def plot_points(
     plt.xlim(x_limits)
     plt.ylim(y_limits)
 
+    # add labels, as necessary
     labeling(labels, ax, config)
 
+    # plot data points for all generations
     x_ = []
     y_ = []
     for i in range(gen):
@@ -67,24 +69,13 @@ def plot_points(
         alpha=0.7, s=2
     )
 
-    if pick_bins == 'on':
-        BC_x = x + '_bin'
-        BC_y = y + '_bin'
-        result = engine.execute(
-                query_bin_counts(BC_x, BC_y, z_bin, run_id, gen - 1).limit(5))
-        bins = []
-        for row in result:
-            line = [row[0], row[1]]
-            bins.append(line)
-        result.close()
-        for b in bins:
-            add_square(
-                x, y,
-                b[0], b[1],
-                'none',
-                'k',
-                ax, config
-            )
+    # highlight most recent generation
+    highlight_children(x, y, z_bin, run_id, gen, children, 'DataPoints')
+    # highlight parents
+    if parents == 'on':
+        hightlight_parents(x, y, z_bin, run_id, gen)
+    # highlight most populated bins
+    highlight_top_bins(x, y, z_bin, run_id, gen, top_bins)
 
 def add_square(
         x, y, 
