@@ -73,34 +73,9 @@ def plot_points(
     highlight_children(x, y, z_bin, run_id, gen, children, 'DataPoints')
     # highlight parents
     if parents == 'on':
-        hightlight_parents(x, y, z_bin, run_id, gen)
+        hightlight_parents(x, y, z_bin, run_id, gen, 'DataPoints')
     # highlight most populated bins
     highlight_top_bins(x, y, z_bin, run_id, gen, top_bins)
-
-def add_square(
-        x, y, 
-        x_value, y_value,
-        facecolor,
-        edgecolor,
-        ax, config,
-        linewidth=None,
-        linestyle='solid'):
-    x_width = get_width(x, config)
-    y_width = get_width(y, config)
-    x_pos = x_value * x_width
-    y_pos = y_value * y_width
-    ax.add_patch(
-        patches.Rectangle(
-            (x_pos, y_pos),
-            x_width,
-            y_width,
-            facecolor = facecolor,
-            edgecolor = edgecolor,
-            linewidth = linewidth,
-            linestyle = linestyle,
-            alpha = 1
-        )
-    )
 
 def plot_bin_counts(
         x, y, z_bin,
@@ -134,34 +109,11 @@ def plot_bin_counts(
     y_limits = get_limits(y, config)
     plt.xlim(x_limits)
     plt.ylim(y_limits)
-    
-    if labels == None or labels == 'grid_only':
-        plt.tick_params(
-            axis='both', which='both', bottom='off', top='off', labelbottom='off',
-            right='off', left='off', labelleft='off'
-        )
-    elif labels == 'first_only':
-        if z_bins.index(z_bin) != 0 or generations.index(gen) != 0:
-            ax.tick_params(labelbottom=False, labelleft=False)
-        if z_bins.index(z_bin) == 0 and generations.index(gen) == 0:
-            x_ticks = np.arange(
-                x_limits[0], x_limits[1] + 0.01,
-                (x_limits[1] - x_limits[0]) / 2.
-            )
-            ax.set_xticks(x_ticks)
-            y_ticks = np.arange(
-                y_limits[0], y_limits[1] + 0.01,
-                (y_limits[1] - y_limits[0]) / 2.
-            )
-            ax.set_yticks(y_ticks)
-        if z_bins.index(z_bin) == 0 and generations.index(gen) == 1:
-            plt.xlabel(x)
-            plt.ylabel(y)
-    elif labels == 'all':
-        plt.xlabel(x)
-        plt.ylabel(y)
 
-#    min_count, max_count, avg_count = get_max_count(x, y, z_bin, run_id, gen)
+    # add labels, as necessary
+    labeling(labels, ax, config)
+
+    # bin materials
     result = engine.execute(query_bin_counts(x, y, z_bin, run_id, gen))
     x_ = []
     y_ = []
@@ -171,80 +123,21 @@ def plot_bin_counts(
         y_.append(row[1])
         c_.append(row[2])
     result.close()
-#    avg_count = sum(c_) / len(c_)
-    if c_ != []:
-        avg_count = median(c_)
-        max_dev = max([abs(avg_count - min(c_)), abs(avg_count - max(c_))])
-#        cax = ax.imshow(c_, cm
-#        cmap = cm.brg
-#        norm = mpl.colors.Normalize(
-#            vmin=avg_count - max_dev, vmax= avg_count + max_dev)
-#        plt.colorbar()
-        for i in range(len(c_)):
-            if max_dev != 0:
-                dev = abs(avg_count - c_[i]) / max_dev
-                if c_[i] > avg_count:
-                    fraction = 0.5 + dev
-                elif c_[i] < avg_count:
-                    fraction = 0.5 - dev
-                else:
-                    fraction = 0.5
 
-            
-    #        color = cm.brg(0.5 + dev)        
-#            if c_[i] >= avg_count:
-#                max_dev = max(c_) - avg_count
-#                if max_dev != 0:
-#                    dev = (c_[i] - avg_count) / (2 * max_dev)
-#                    fraction = 0.5 + dev
-#                else:
-#                    fraction = 0.5
-#            elif c_[i] < avg_count:
-#                max_dev = avg_count - min(c_)
-#                if max_dev != 0:
-#                    dev = (avg_count - c_[i]) / (2 * max_dev)
-#                    fraction = 0.5 - dev
-#                else:
-#                    fraction = 0.5
-#            count_range = max(c_) - min(c_)
-#            if count_range != 0:
-#                fraction = (count_range - (max(c_) - c_[i])) / count_range
-                color = cm.brg(fraction)
-                add_square(
-                    x, y,
-                    x_[i], y_[i],
-                    color,
-                    None,
-                    ax, config
-                )
-#       result.close()
+    # normalise bin-counts
+    norm_c = [i / max(c_) for i in c_]
 
-    if highlight_parents == 'on':
-        if gen != 0:
-            s = query_parents(x, y, z_bin, run_id, gen)
-            result = engine.execute(s)
-            for row in result:
-                add_square(
-                    x, y,
-                    row[0][0], i[0][1],
-                    'none',
-                    'y',
-                    ax, config,
-                    2
-                )
-            result.close()
+    for i in range(len(x_)):
+        add_square(
+                x, y,
+                x_[i], y_[i],               # bin (x, y)
+                cm.brg(fraction), None,     # square colour, edge colour
+                ax, config
+        )
 
-#    if highlight_children == 'on':
-#        values = query_child_bins(x, y, z_bin, run_id, gen)
-#        for i in values:
-#            add_square(
-#                x, y,
-#                i[0], i[1],
-#                'none',
-#                'r',
-#                ax, config,
-#                1, ':'
-#            )
+    # highlight parents
+    if parents == 'on':
+        hightlight_parents(x, y, z_bin, run_id, gen, 'BinCounts')
 
 def plot_mutation_strengths(
         x, y, z_bin,

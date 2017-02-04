@@ -102,17 +102,33 @@ def highlight_children(x, y, z_bin, run_id, gen, children, data_type):
 #    elif data_type == 'BinCounts':
 #    elif data_type == 'MutationStrength':
 
-def hightlight_parents(x, y, z_bin, run_id, gen):
-    x_, y_ = query_parents(x, y, z_bin, run_id, gen)
-    if len(x_) > 0 and len(y_) > 0:
-        plt.scatter(
-            x_, y_,
-            marker='o',
-            facecolors='none',
-            edgecolors='k',
-            linewidth='0.4',
-            alpha=0.5, s=5
-        )
+def hightlight_parents(x, y, z_bin, run_id, gen, data_type):
+    if data_type == 'DataPoints':
+        x_, y_ = query_parents(x, y, z_bin, run_id, gen)
+        if len(x_) > 0 and len(y_) > 0:
+            plt.scatter(
+                x_, y_,
+                marker='o',
+                facecolors='none',
+                edgecolors='k',
+                linewidth='0.4',
+                alpha=0.5, s=5
+            )
+
+    elif data_type == 'BinCounts':
+        if gen != 0:
+            s = query_parents(x, y, z_bin, run_id, gen)
+            result = engine.execute(s)
+            for row in result:
+                add_square(
+                    x, y,
+                    row[0][0], i[0][1],
+                    'none',
+                    'y',
+                    ax, config,
+                    2
+                )
+            result.close()
 
 def highlight_top_bins(x, y, z_bin, run_id, gen, pick_bins):
     if pick_bins != None:
@@ -135,5 +151,30 @@ def highlight_top_bins(x, y, z_bin, run_id, gen, pick_bins):
                 'k',
                 ax, config
             )
+
+def add_square(
+        x, y, 
+        x_value, y_value,
+        facecolor,
+        edgecolor,
+        ax, config,
+        linewidth=None,
+        linestyle='solid'):
+    x_width = get_width(x, config)
+    y_width = get_width(y, config)
+    x_pos = x_value * x_width
+    y_pos = y_value * y_width
+    ax.add_patch(
+        patches.Rectangle(
+            (x_pos, y_pos),
+            x_width,
+            y_width,
+            facecolor = facecolor,
+            edgecolor = edgecolor,
+            linewidth = linewidth,
+            linestyle = linestyle,
+            alpha = 1
+        )
+    )
 
 
