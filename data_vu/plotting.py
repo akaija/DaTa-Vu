@@ -83,8 +83,7 @@ def plot_bin_counts(
         config, ax,
         z_bins, generations,
         labels = None,
-        highlight_children='off',
-        highlight_parents='off'
+        parents='off'
     ):
     """Create bin-plot 'x' v. 'y' either by plotting a z-axis slice,
         or all slices at once. Bins are coloured by bin-count.
@@ -123,15 +122,18 @@ def plot_bin_counts(
         y_.append(row[1])
         c_.append(row[2])
     result.close()
+#    print(x_, y_, c_)
 
     # normalise bin-counts
     norm_c = [i / max(c_) for i in c_]
+#    print('norm_c :\t%s' % norm_c)
 
     for i in range(len(x_)):
+#        print(x_[i], y_[i])
         add_square(
                 x, y,
                 x_[i], y_[i],               # bin (x, y)
-                cm.brg(fraction), None,     # square colour, edge colour
+                cm.brg(norm_c[i]), None,     # square colour, edge colour
                 ax, config
         )
 

@@ -106,17 +106,16 @@ def plot_HTSOHM(
                             labels, children, parents, top_bins
                         )
 
-#                    elif data_type == 'BinCounts':
-#                        BC_x = x + '_bin'
-#                        BC_y = y + '_bin'
-#                        plot_bin_counts(
-#                            BC_x, BC_y, z_bin,
-#                            run_id, generation,
-#                            config, ax, z_bins, generations,
-#                            labels,
-#                            highlight_children,
-#                            highlight_parents
-#                        )
+                    elif data_type == 'BinCounts':
+                        BC_x = x + '_bin'
+                        BC_y = y + '_bin'
+                        plot_bin_counts(
+                            BC_x, BC_y, z_bin,
+                            run_id, generation,
+                            config, ax, z_bins, generations,
+                            labels,
+                            parents
+                        )
 #
 #                    elif data_type == 'MutationStrengths':
 #                        MS_x = x + '_mutation_strength'
