@@ -201,10 +201,9 @@ def query_mutation_strength(x, y, z_bin, run_id, gen):
     initial_strength = load_config_file(run_id)['initial_mutation_strength']
     x_ = get_attr(x)
     y_ = get_attr(y)
-    z_ = [i + '_mutation_strength' for i in ['gl', 'sa', 'vf']]
-    z_.remove(x)
-    z_.remove(y)
-    z_ = get_attr(z_[0])
+    z_ = [get_attr(i + '_mutation_strength') for i in ['ga', 'sa', 'vf']]
+    z_.remove(x_)
+    z_.remove(y_)
     vals = []
     for x in range(number_of_bins):
         for y in range(number_of_bins):
@@ -224,6 +223,7 @@ def query_mutation_strength(x, y, z_bin, run_id, gen):
                 ms = initial_strength
             line = [x, y, ms]
             vals.append(line)
+    print('vals :\t%s' % vals)
     return vals
 
 def get_all_bins(x, y, z_bin, run_id, gen):

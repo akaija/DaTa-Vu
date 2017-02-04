@@ -116,18 +116,18 @@ def plot_HTSOHM(
                             labels,
                             parents
                         )
-#
-#                    elif data_type == 'MutationStrengths':
-#                        MS_x = x + '_mutation_strength'
-#                        MS_y = y + '_mutation_strength'
-#                        plot_mutation_strengths(
-#                            MS_x, MS_y, z_bin,
-#                            run_id, generation,
-#                            config, ax, z_bins, generations,
-#                            labels,
+
+                    elif data_type == 'MutationStrengths':
+                        MS_x = x + '_mutation_strength'
+                        MS_y = y + '_mutation_strength'
+                        plot_mutation_strengths(
+                            MS_x, MS_y, z_bin,
+                            run_id, generation,
+                            config, ax, z_bins, generations,
+                            labels
 #                            highlight_children,
 #                            highlight_parents
-#                        )
+                        )
 
             plt.savefig(
                 '%s_%s_%s_%s_' % (run_id, x, y, data_type) +

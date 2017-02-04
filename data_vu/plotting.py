@@ -172,34 +172,13 @@ def plot_mutation_strengths(
     y_limits = get_limits(y, config)
     plt.xlim(x_limits)
     plt.ylim(y_limits)
-    
-    if labels == None:
-        plt.tick_params(
-            axis='both', which='both', bottom='off', top='off', labelbottom='off',
-            right='off', left='off', labelleft='off'
-        )
-    elif labels == 'first_only':
-        if z_bins.index(z_bin) != 0 or generations.index(gen) != 0:
-            ax.tick_params(labelbottom=False, labelleft=False)
-        if z_bins.index(z_bin) == 0 and generations.index(gen) == 0:
-            x_ticks = np.arange(
-                x_limits[0], x_limits[1] + 0.01,
-                (x_limits[1] - x_limits[0]) / 2.
-            )
-            ax.set_xticks(x_ticks)
-            y_ticks = np.arange(
-                y_limits[0], y_limits[1] + 0.01,
-                (y_limits[1] - y_limits[0]) / 2.
-            )
-            ax.set_yticks(y_ticks)
-        if z_bins.index(z_bin) == 0 and generations.index(gen) == 1:
-            plt.xlabel(x)
-            plt.ylabel(y)
-    elif labels == 'all':
-        plt.xlabel(x)
-        plt.ylabel(y)
- 
+
+    # add labels, as necessary
+    labeling(labels, ax, config)
+
+    print('about to query...')
     values = query_mutation_strength(x, y, z_bin, run_id, gen)
+    print('...values :\t%s' % values)
     for i in values:
         color = cm.Reds( i[2] )
         add_square(
