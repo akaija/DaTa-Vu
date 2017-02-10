@@ -52,18 +52,18 @@ def plot_points(
     labeling(labels, ax, config)
 
     # plot data points for all generations
-    x_ = []
-    y_ = []
     for i in range(gen):
-        x_, y_ = query_points(x, y, z_bin, run_id, i)
-        result.close()
-    plt.scatter(
-        x_, y_,
-        marker='o', 
-        facecolors='k',
-        edgecolors='none',
-        alpha=0.7, s=2
-    )
+        x_ = query_points(x, z_bin, run_id, i)
+        y_ = query_points(y, z_bin, run_id, i)
+        print('x_ :\t%s' % x_)
+        print('y_ :\t%s' % y_)
+        plt.scatter(
+            x_, y_,
+            marker='o', 
+            facecolors='k',
+            edgecolors='none',
+            alpha=0.7, s=2
+        )
 
     # highlight most recent generation
     highlight_children(x, y, z_bin, run_id, gen, children, 'DataPoints')
@@ -109,7 +109,7 @@ def plot_bin_counts(
     labeling(labels, ax, config)
 
     # bin materials
-    x_, y_, c_ = engine.execute(query_bin_counts(x, y, z_bin, run_id, gen))
+    x_, y_, c_ = query_bin_counts(x, y, z_bin, run_id, gen)
 
     # normalise bin-counts
     norm_c = [i / max(c_) for i in c_]

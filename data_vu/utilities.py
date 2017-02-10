@@ -17,7 +17,7 @@ def load_config_file(run_id):
 
 def get_limits(x, config):
     if 'ga' in x:
-        limits = config['gas_adsorption']['limits']
+        limits = config['gas_adsorption_0']['limits']
     elif 'sa' in x:
         limits = config['surface_area']['limits']
     elif 'vf' in x:
@@ -25,13 +25,7 @@ def get_limits(x, config):
     return limits
 
 def get_attr(x):
-    if x == 'ga':
-        attr = getattr(materials.c, 'ga_absolute_volumetric_loading')
-    elif x == 'sa':
-        attr = getattr(materials.c, 'sa_volumetric_surface_area')
-    elif x == 'vf':
-        attr = getattr(materials.c, 'vf_helium_void_fraction')
-    elif x == 'ga_mutation_strength':
+    if x == 'ga_mutation_strength':
         attr = getattr(mutation_strengths.c, 'gas_adsorption_bin')
     elif x == 'sa_mutation_strength':
         attr = getattr(mutation_strengths.c, 'surface_area_bin')

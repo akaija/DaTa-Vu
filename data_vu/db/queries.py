@@ -26,25 +26,11 @@ def count_generations(run_id):
     result.close()
     return max_gen
 
-def query_points(x, y, z_bin, run_id, gen):
-    """Queries database for two structure-properties.
+def query_points(x, z_bin, run_id, gen):
+    config           = load_config_file(run_id)
+    generation_size  = config['children_per_generation']
+    simulations      = config['material_properties']
 
-    Args:
-        x (str): `gl`, `sa`, `vf`.
-        y (str): `gl`, `sa`, `vf`.
-        z_bin (int): None, [0, number_of_bins].
-        run_id (str): run identification string.
-        gen (int): generation.
-
-    Returns:
-        values (list): [x(float), y(float)]
-
-    If z_bin == None: all z_bins are queried, instead of one slice.
-
-    """
-    generation_size = load_config_file(run_id)['children_per_generation']
-    
-    cols = [get_attr(x), get_attr(y)]
     rows = and_(materials.c.run_id == run_id, materials.c.generation == gen,
             or_(materials.c.retest_passed == None,
                                 materials.c.retest_passed == True),
@@ -52,15 +38,28 @@ def query_points(x, y, z_bin, run_id, gen):
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
 
-    result = engine.execute(select(cols, rows))
-    x_ = []
-    y_ = []
-    for row in result:
-        x_.append(row[0])
-        y_.append(row[1])
-    result.close()
-
-    return x_, y_
+    if x == 'vf' or x == 'sa' or 'gas_adsorption_1' not in simulations:
+        if x == 'vf':
+            cols = [materials.c.vf_helium_void_fraction]
+        elif x == 'sa':
+            cols = [materials.c.sa_volumetric_surface_area]
+        elif x == 'ga':
+            cols = [materials.c.ga0_absolute_volumetric_loading]
+        result = engine.execute(select(cols, rows))
+        x_ = []
+        for row in result:
+            x_.append(row[0])
+        result.close()
+    else:
+        cols = [materials.c.ga0_absolute_volumetric_loading,
+                materials.c.ga1_absolute_volumetric_loading]
+        result = engine.execute(select(cols, rows))
+        x_ = []
+        for row in result:
+            print(row)
+            x_.append(abs(row[0] - row[1]))
+        result.close()
+    return x_
 
 def query_bin_counts(x, y, z_bin, run_id, gen):
     """Queries database for bin_counts.
@@ -90,7 +89,7 @@ def query_bin_counts(x, y, z_bin, run_id, gen):
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
     result = engine.execute(
-            select(cols, rows).group_by(*sort).order_by(asc(*ordr))
+            select(cols, rows).group_by(*sort).order_by(asc(*ordr)))
     x_ = []
     y_ = []
     c_ = []

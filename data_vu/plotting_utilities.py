@@ -54,7 +54,8 @@ def highlight_children(x, y, z_bin, run_id, gen, children, data_type):
             child_colour = 'k'
         elif children == 'on':
             child_colour = 'r'
-            x_, y = query_points(x, y, z_bin, run_id, gen)
+            x_ = query_points(x, z_bin, run_id, gen)
+            y_ = query_points(y, z_bin, run_id, gen)
             plt.scatter(
                 x_, y_,
                 marker='o',

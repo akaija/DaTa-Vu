@@ -1,1 +1,2 @@
-connection_string: "postgresql://htsohm:dentate-canst-freely@127.0.01/htsohm_28nov"
+#connection_string: "postgresql://htsohm:dentate-canst-freely@127.0.01/htsohm_28nov"
+connection_string: "postgresql://htsohm:dentate-canst-freely@127.0.01/dp_dev"
