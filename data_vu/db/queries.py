@@ -43,7 +43,7 @@ def query_points(x, y, z_bin, run_id, gen):
 
     """
     generation_size = load_config_file(run_id)['children_per_generation']
-
+    
     cols = [get_attr(x), get_attr(y)]
     rows = and_(materials.c.run_id == run_id, materials.c.generation == gen,
             or_(materials.c.retest_passed == None,
@@ -51,7 +51,16 @@ def query_points(x, y, z_bin, run_id, gen):
                         materials.c.generation_index <= generation_size)
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
-    return select(cols, rows)
+
+    result = engine.execute(select(cols, rows))
+    x_ = []
+    y_ = []
+    for row in result:
+        x_.append(row[0])
+        y_.append(row[1])
+    result.close()
+
+    return x_, y_
 
 def query_bin_counts(x, y, z_bin, run_id, gen):
     """Queries database for bin_counts.
@@ -80,7 +89,16 @@ def query_bin_counts(x, y, z_bin, run_id, gen):
     ordr = [func.count(materials.c.uuid)]
     if z_bin != None:
         rows = and_(rows, get_z_attr(x, y) == z_bin)
-    return select(cols, rows).group_by(*sort).order_by(asc(*ordr))
+    result = engine.execute(
+            select(cols, rows).group_by(*sort).order_by(asc(*ordr))
+    x_ = []
+    y_ = []
+    c_ = []
+    for row in result:
+        x_.append(row[0])
+        y_.append(row[1])
+        c_.append(row[2])
+    return x_, y_, c_
 
 def get_max_count(x, y, z_bin, run_id, gen):
     """Query database for highest bin-count.
@@ -378,3 +396,26 @@ def get_max(run_id, x):
     for row in result:
         print(row)
     result.close()
+
+def query_dGdP(x, z_bin, run_id, gen):
+    x_ = get_attr(x)
+    cols = [
+        x_,
+        materials.c.ga0_absolute_volumetric_loading,
+        materials.ga1_absolute_volumetric_loading
+    ]
+    rows = and_(materials.c.run_id == run_id, materials.c.generation <= gen,
+            or_(materials.c.retest_passed == None,
+                                materials.c.retest_passed == True),
+                        materials.c.generation_index <= generation_size)
+    x = []
+    y0 = []
+    y1 = []
+    result = engine.execute(select(cols, rows))
+    for row in result:
+        x.append(row[0])
+        y0.append(row[1])
+        y1.append(row[2])
+    result.close()
+
+    return x, y0, y1

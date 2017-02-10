@@ -54,14 +54,7 @@ def highlight_children(x, y, z_bin, run_id, gen, children, data_type):
             child_colour = 'k'
         elif children == 'on':
             child_colour = 'r'
-            s = query_points(x, y, z_bin, run_id, gen)
-            result = engine.execute(s)
-            x_ = []
-            y_ = []
-            for row in result:
-                x_.append(row[0])
-                y_.append(row[1])
-            result.close()
+            x_, y = query_points(x, y, z_bin, run_id, gen)
             plt.scatter(
                 x_, y_,
                 marker='o',
@@ -134,19 +127,13 @@ def highlight_top_bins(x, y, z_bin, run_id, gen, pick_bins):
     if pick_bins != None:
         BC_x = x + '_bin'
         BC_y = y + '_bin'
-        result = engine.execute(
-                query_bin_counts(
-                    BC_x, BC_y, z_bin, run_id, gen - 1
-                    ).limit(pick_bins))
-        bins = []
-        for row in result:
-            line = [row[0], row[1]]
-            bins.append(line)
-        result.close()
-        for b in bins:
+        x_, y_, c_ = query_bin_counts(BC_x, BC_y, z_bin, run_id, gen - 1)
+        x_ = x_[:pick_bins]
+        y_ = y_[:pick_bins]
+        for i in range(len(x_)):
             add_square(
                 x, y,
-                b[0], b[1],
+                x_[i], y_[i],
                 'none',
                 'k',
                 ax, config

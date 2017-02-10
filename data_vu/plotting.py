@@ -55,11 +55,7 @@ def plot_points(
     x_ = []
     y_ = []
     for i in range(gen):
-        s = query_points(x, y, z_bin, run_id, i)
-        result = engine.execute(s)
-        for row in result:
-            x_.append(row[0])
-            y_.append(row[1])
+        x_, y_ = query_points(x, y, z_bin, run_id, i)
         result.close()
     plt.scatter(
         x_, y_,
@@ -113,16 +109,7 @@ def plot_bin_counts(
     labeling(labels, ax, config)
 
     # bin materials
-    result = engine.execute(query_bin_counts(x, y, z_bin, run_id, gen))
-    x_ = []
-    y_ = []
-    c_ = []
-    for row in result:
-        x_.append(row[0])
-        y_.append(row[1])
-        c_.append(row[2])
-    result.close()
-#    print(x_, y_, c_)
+    x_, y_, c_ = engine.execute(query_bin_counts(x, y, z_bin, run_id, gen))
 
     # normalise bin-counts
     norm_c = [i / max(c_) for i in c_]
